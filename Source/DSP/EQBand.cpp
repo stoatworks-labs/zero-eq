@@ -9,7 +9,24 @@ void EQBand::prepare(const juce::dsp::ProcessSpec& spec)
     for (auto& stage : stages)
         stage.prepare(spec);
 
-    harmonicShapers.assign(juce::jmax((size_t) 1, (size_t) spec.numChannels), HarmonicShaper());
+    const size_t numChannels = juce::jmax((size_t) 1, (size_t) spec.numChannels);
+    harmonicShapers.assign(numChannels, HarmonicShaper());
+
+    // Each channel needs its own isolation filter instance (own state), even though
+    // they all share the same coefficients. Built in place - juce::dsp::IIR::Filter
+    // isn't copy-assignable, so assign()/resize() won't work here.
+    auto monoSpec = spec;
+    monoSpec.numChannels = 1;
+    harmonicBandFilters.clear();
+    harmonicBandFilters.reserve(numChannels);
+    for (size_t i = 0; i < numChannels; ++i)
+        harmonicBandFilters.emplace_back();
+    for (auto& f : harmonicBandFilters)
+        f.prepare(monoSpec);
+
+    // Force a redesign on the next update() now that the sample rate may have changed.
+    lastIsolationFreq = 0.0f;
+    lastIsolationQ = 0.0f;
 }
 
 void EQBand::reset()
@@ -18,6 +35,23 @@ void EQBand::reset()
         stage.reset();
     for (auto& shaper : harmonicShapers)
         shaper.reset();
+    for (auto& f : harmonicBandFilters)
+        f.reset();
+}
+
+EQBand::Coeffs::Ptr EQBand::designRegionIsolationFilter(FilterType type, float freqHz, float q, double sampleRate)
+{
+    freqHz = juce::jlimit(20.0f, (float) (sampleRate * 0.49), freqHz);
+    q = juce::jmax(0.1f, q);
+
+    switch (type)
+    {
+        case FilterType::LowShelf:  return Coeffs::makeLowPass(sampleRate, freqHz, q);
+        case FilterType::HighShelf: return Coeffs::makeHighPass(sampleRate, freqHz, q);
+        case FilterType::Bell:
+        case FilterType::TiltShelf:
+        default:                    return Coeffs::makeBandPass(sampleRate, freqHz, q);
+    }
 }
 
 float EQBand::proportionalQ(float baseQ, float gainDb, FilterCharacter character)
@@ -114,6 +148,31 @@ void EQBand::update(FilterType type, float freqHz, float gainDb, float q,
     // essentially transparent even in Harmonic mode; up to +/-12dB reaches full drive.
     harmonicDriveAmount = harmonicEnabled ? juce::jlimit(0.0f, 1.0f, std::abs(gainDb) / 12.0f) : 0.0f;
     harmonicBlendAmount = harmonicBlend;
+
+    if (harmonicEnabled)
+    {
+        // Only redesign when the isolated region actually moves - Coeffs::make* allocates,
+        // and this runs on the audio thread.
+        const bool changed = type != lastIsolationType
+                             || ! juce::approximatelyEqual(freqHz, lastIsolationFreq)
+                             || ! juce::approximatelyEqual(q, lastIsolationQ);
+
+        if (changed || harmonicBandFilters.empty() || harmonicBandFilters[0].coefficients == nullptr)
+        {
+            auto isolation = designRegionIsolationFilter(type, freqHz, q, currentSampleRate);
+            for (auto& f : harmonicBandFilters)
+            {
+                if (f.coefficients == nullptr)
+                    f.coefficients = isolation;
+                else
+                    *f.coefficients = *isolation;
+            }
+
+            lastIsolationType = type;
+            lastIsolationFreq = freqHz;
+            lastIsolationQ = q;
+        }
+    }
 }
 
 void EQBand::process(const juce::dsp::ProcessContextReplacing<float>& context)
@@ -124,15 +183,33 @@ void EQBand::process(const juce::dsp::ProcessContextReplacing<float>& context)
     for (int i = 0; i < activeStageCount; ++i)
         stages[(size_t) i].process(context);
 
-    if (harmonicEnabled && harmonicDriveAmount > 0.0f)
+    if (harmonicEnabled && harmonicDriveAmount > 0.0f && ! harmonicBandFilters.empty()
+        && harmonicBandFilters[0].coefficients != nullptr)
     {
         auto block = context.getOutputBlock();
-        const size_t numChannels = juce::jmin(block.getNumChannels(), harmonicShapers.size());
+        const size_t numChannels = juce::jmin(block.getNumChannels(),
+                                               juce::jmin(harmonicShapers.size(), harmonicBandFilters.size()));
         for (size_t ch = 0; ch < numChannels; ++ch)
         {
             auto* samples = block.getChannelPointer(ch);
+            auto& isolate = harmonicBandFilters[ch];
+            auto& shaper = harmonicShapers[ch];
+
             for (size_t n = 0; n < block.getNumSamples(); ++n)
-                samples[n] = harmonicShapers[ch].processSample(samples[n], harmonicDriveAmount, harmonicBlendAmount);
+            {
+                const float dry = samples[n];
+
+                // Isolate this band's spectral region, generate harmonics from ONLY
+                // that, then sum the generated content back in parallel with the dry
+                // signal. Subtracting `region` leaves just the harmonics the shaper
+                // added, so the band's own level is untouched - a Harmonic band adds
+                // harmonic content to the frequencies it targets rather than boosting
+                // the fundamental or saturating the full-range signal.
+                const float region = isolate.processSample(dry);
+                const float shaped = shaper.processSample(region, harmonicDriveAmount, harmonicBlendAmount);
+
+                samples[n] = dry + (shaped - region);
+            }
         }
     }
 }

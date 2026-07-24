@@ -1,4 +1,5 @@
 #include "DynamicEQDetector.h"
+#include "EQBand.h"
 
 namespace ZeroEQ
 {
@@ -22,17 +23,9 @@ void DynamicEQDetector::reset()
 
 DynamicEQDetector::Coeffs::Ptr DynamicEQDetector::designAnalysisFilter(FilterType bandType, float freqHz, float q, double sr)
 {
-    freqHz = juce::jlimit(20.0f, (float) (sr * 0.49), freqHz);
-    q = juce::jmax(0.1f, q);
-
-    switch (bandType)
-    {
-        case FilterType::LowShelf:  return Coeffs::makeLowPass(sr, freqHz, q);
-        case FilterType::HighShelf: return Coeffs::makeHighPass(sr, freqHz, q);
-        case FilterType::Bell:
-        case FilterType::TiltShelf:
-        default:                    return Coeffs::makeBandPass(sr, freqHz, q);
-    }
+    // "The region this band affects" is one concept, shared with the Harmonic
+    // character's saturation stage - keep it defined in exactly one place.
+    return EQBand::designRegionIsolationFilter(bandType, freqHz, q, sr);
 }
 
 float DynamicEQDetector::process(const juce::AudioBuffer<float>& buffer, FilterType bandType,

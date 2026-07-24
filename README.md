@@ -6,7 +6,7 @@
 > against real audio (throwaway numeric test harnesses processing real signals through
 > the actual shipped processor class, not just static curve math — including FFT-verified
 > harmonic content for the saturation stage), `pluginval` passes clean on VST3 and passes
-> on AU with one known benign warning (see Status), and it's been loaded and hosted
+> on AU with two known benign warnings (see Status), and it's been loaded and hosted
 > successfully in REAPER. It has **not** been used on real hardware in a live signal
 > chain yet. Review before use on live gear.
 
@@ -31,10 +31,12 @@ A zero-added-latency parametric EQ + compressor VST3/AU plugin, built with JUCE.
   per band, on an external sidechain input instead.
 - **Three per-band characters** — Modern (independent Q, textbook response), Vintage
   (proportional Q that widens with applied gain, approximating passive/console-style
-  musical EQs such as Cranborne Audio's Harmonic EQ), and Harmonic (adds gain-driven
-  even/odd harmonic saturation on top of the Modern-style linear response). Vintage and
-  Harmonic are original approximations of that *behaviour*, not circuit models or clones
-  of any specific product.
+  musical EQs such as Cranborne Audio's Harmonic EQ), and Harmonic (generates gain-driven
+  even/odd harmonics from **only that band's frequency region** and sums them back in
+  parallel with the dry signal, so it adds harmonic content where the band is aimed
+  instead of saturating the full-range signal). Vintage and Harmonic are original
+  approximations of that *behaviour*, not circuit models or clones of any specific
+  product.
 - **Input/output trim** with metering, plus a post-EQ feed-forward compressor
   (soft-knee, peak/RMS detection, no lookahead — also zero added latency).
 - **Presets** — 7 factory presets covering every feature area (static EQ shaping,
@@ -51,9 +53,10 @@ A zero-added-latency parametric EQ + compressor VST3/AU plugin, built with JUCE.
 
 - [x] **Dynamic EQ bands** — shipped. Per-band threshold/ratio/attack/release/range,
   selectable Downward (duck) or Upward (boost) direction.
-- [x] **Harmonic-based EQ** — shipped. A third per-band character that layers gain-driven
-  even/odd harmonic saturation on top of the standard linear response, with a per-band
-  blend control between the two harmonic families.
+- [x] **Harmonic-based EQ** — shipped. A third per-band character that generates
+  gain-driven even/odd harmonics from only the band's own frequency region and sums
+  them back in parallel, with a per-band blend control between the two harmonic
+  families.
 - [x] **Preset system** — shipped. 7 factory presets plus user preset save/load.
 - [x] **Ballistics-accurate metering** — shipped. Peak, VU, true-peak-estimate, and
   held clip indication on the input/output meters, replacing the earlier raw
@@ -146,6 +149,16 @@ oversampling — the waveshaper's antiderivative is evaluated across the current
 previous sample instead of the raw function at the current sample, which suppresses
 aliasing from the nonlinearity without needing lookahead or extra latency.
 
+Crucially, the shaper is **fed only that band's spectral region**, not the full-range
+signal. The band's audio is split off through the same region-isolation filter the
+dynamic detector uses (band-pass at freq/Q for Bell/Tilt, high-pass at the corner for
+High Shelf, low-pass for Low Shelf), saturated, and then only the *generated* harmonic
+content — the shaped signal minus the isolated region — is summed back into the dry
+path. That parallel structure is what makes this a harmonic *EQ* rather than a
+saturator behind a filter: a Harmonic bell at 5 kHz adds harmonics derived from the
+5 kHz region and leaves a bass note passing through the same band untouched, and
+because only the difference is summed, the band's own level is unchanged.
+
 ## Presets
 
 7 factory presets, each starting from a full reset-to-defaults so every parameter not
@@ -236,30 +249,37 @@ hardened runtime (`codesign --options runtime`) and notarize the containing
 
 ## Status
 
-Phase 6: DSP engine, dynamic EQ (with optional external sidechain detection),
-harmonic saturation, presets, ballistics-accurate metering, and full interactive GUI
-(spectrum analyzer, draggable curve, preset bar, band/compressor/IO panels, live
-dynamic-gain indicators). Verified via `pluginval` (VST3 + AU, strictness 5 — VST3
-clean; AU passes with one known benign warning, see below), hosted successfully in
-REAPER, and checked against real audio through the actual shipped processor class —
-including an FFT check confirming the even/odd harmonic generators each produce
-exactly the harmonic content they're supposed to and nothing else, a full sweep
-confirming every factory preset applies correctly, produces finite (no NaN) audio and
-reports zero added latency, a metering pass confirming peak attack/release timing, VU
+Phase 7: DSP engine, dynamic EQ (with optional external sidechain detection),
+band-isolated harmonic generation, presets, ballistics-accurate metering, and full
+interactive GUI (spectrum analyzer, draggable curve, preset bar, band/compressor/IO
+panels, live dynamic-gain indicators). Verified via `pluginval` (VST3 + AU, strictness
+5 — VST3 clean; AU passes with two known benign warnings, see below), hosted
+successfully in REAPER, and checked against real audio through the actual shipped
+processor class — including a two-tone FFT check confirming the Harmonic character
+generates harmonics from only its own band's region while leaving an out-of-band tone
+untouched (91dB of selectivity measured, with the out-of-band fundamental passing
+through within 0.01dB), that pure-odd blend produces odd harmonics and no even ones,
+and that a Harmonic band at 0dB gain is fully transparent; a full sweep confirming
+every factory preset applies correctly, produces finite (no NaN) audio and reports
+zero added latency; a metering pass confirming peak attack/release timing, VU
 ballistics, true-peak inter-sample detection, and clip-indicator hold time all match
-their intended behaviour on known test signals, and a sidechain pass confirming a
+their intended behaviour on known test signals; and a sidechain pass confirming a
 dynamic band tracks the external sidechain signal (not the internal one) when its
 toggle is on, tracks the internal signal steadily when it's off, and falls back to
 internal detection cleanly when sidechain audio isn't actually connected. See open
 items below for what's still outstanding.
 
-**Known benign AU warning**: `pluginval`'s "Disabling non-main buses" check fails on
-the AU build (Apple's own `auval` validator still passes with exit code 0, and every
-other check — including enabling all buses and restoring the default layout — passes
-clean). This is a documented JUCE/AudioUnit interaction: AUv2's bus-disable semantics
-for auxiliary/sidechain input buses don't round-trip the same way pluginval expects,
-independent of what the plugin itself does; it's a widely reported quirk for AU
-plugins with a sidechain bus, not a Zero EQ-specific bug.
+**Known benign AU warnings**: two `pluginval` warnings appear consistently on the AU
+build while every other check — and Apple's own `auval` validator, exit code 0 —
+passes clean:
+
+- *"Disabling non-main buses failed"* — a documented JUCE/AudioUnit interaction. AUv2's
+  bus-disable semantics for auxiliary/sidechain input buses don't round-trip the way
+  pluginval expects, independent of what the plugin does; a widely reported quirk for
+  AU plugins carrying a sidechain bus.
+- *"Current program is -1"* — the AU wrapper reports no factory preset as explicitly
+  selected until a host selects one, even though `getCurrentProgram()` returns a valid
+  index and the factory preset list is fully populated and functional.
 
 ### Known limitations / next steps
 
