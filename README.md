@@ -5,7 +5,7 @@
 > analytically (filter math checked against the RBJ/Butterworth cookbook formulas) and
 > against real audio (throwaway numeric test harnesses processing real signals through
 > the actual shipped processor class, not just static curve math — including FFT-verified
-> harmonic content for the saturation stage), `pluginval` passes clean on VST3 and passes
+> harmonic content, generated per-band, for the Harmonic character), `pluginval` passes clean on VST3 and passes
 > on AU with two known benign warnings (see Status), and it's been loaded and hosted
 > successfully in REAPER. It has **not** been used on real hardware in a live signal
 > chain yet. Review before use on live gear.
@@ -40,7 +40,7 @@ A zero-added-latency parametric EQ + compressor VST3/AU plugin, built with JUCE.
 - **Input/output trim** with metering, plus a post-EQ feed-forward compressor
   (soft-knee, peak/RMS detection, no lookahead — also zero added latency).
 - **Presets** — 7 factory presets covering every feature area (static EQ shaping,
-  dynamic EQ, harmonic saturation, compressor-forward), plus save/load of your own
+  dynamic EQ, harmonic generation, compressor-forward), plus save/load of your own
   presets to the standard per-user preset directory. Factory presets double as the
   plugin's VST3/AU host "program" list.
 - **Ballistics-accurate metering** — input/output meters combine a fast peak read,
@@ -73,16 +73,18 @@ turns out to be — nothing currently queued.
 
 ```mermaid
 flowchart LR
-    IN["Input Gain<br/>+ metering"] --> EQ["8-band EQ<br/>minimum-phase biquads<br/>+ per-band dynamics<br/>+ per-band harmonic saturation"]
+    IN["Input Gain<br/>+ metering"] --> EQ["8-band EQ<br/>minimum-phase biquads<br/>+ per-band dynamics<br/>+ per-band harmonic generation"]
     EQ --> COMP["Feed-forward compressor<br/>soft-knee, no lookahead"]
     COMP --> OUT["Output Gain<br/>+ metering"]
 ```
 
 Each EQ band's own dynamic detector reads the signal as it arrives at that band's
 position in the chain (post every earlier band, pre this one) and modulates that
-band's gain in real time. The Harmonic character's saturation stage runs immediately
-after that same band's linear filter, so it colors only what that band actually
-touches. Still just one pass through the chain, no lookahead anywhere.
+band's gain in real time. The Harmonic character then runs a small parallel branch off
+that same point: the band's frequency region is split out, shaped, and only the
+harmonics that shaping generated are summed back into the main path — so a Harmonic
+band colours the frequencies it targets and leaves the rest of the spectrum alone.
+Still just one pass through the chain, no lookahead anywhere.
 
 ## Dynamic EQ visual feedback
 
@@ -159,6 +161,14 @@ saturator behind a filter: a Harmonic bell at 5 kHz adds harmonics derived from 
 5 kHz region and leaves a bass note passing through the same band untouched, and
 because only the difference is summed, the band's own level is unchanged.
 
+Note that **drive is coupled to the band's gain** (`|gain| / 12`, clamped) rather than
+being an independent control — a Harmonic band at 0dB is exactly transparent, and you
+reach full drive at ±12dB. That keeps the character honest (no harmonics without an
+EQ move) but it does mean you can't currently dial in heavy harmonics at a modest
+boost. Roughly, measured on a bell at Q=1 with the even-leaning blend, the 2nd
+harmonic sits about 28dB below the fundamental at +3dB gain, 15dB below at +6dB, and
+6dB below at +9dB; +12dB is deliberately extreme.
+
 ## Presets
 
 7 factory presets, each starting from a full reset-to-defaults so every parameter not
@@ -169,10 +179,10 @@ mentioned below stays at its default:
 | Init | Flat/default state, useful as a starting point or reference |
 | Vocal Presence | Static EQ shaping — low-mid cut, presence bump, air shelf |
 | De-Esser (Dynamic) | A single dynamic downward band tuned to catch sibilance |
-| Warm Bus (Harmonic) | Harmonic character on two bands (even-leaning low end, odd-leaning top) plus gentle bus compression |
+| Warm Bus (Harmonic) | Harmonic character on two bands (even-leaning low end, odd-leaning top) plus gentle bus compression — subtle by design, both bands sit at low gain and therefore low drive |
 | Podcast Voice | HPF + presence + a dynamic band taming harshness + compressor, combined |
 | Broadcast Loudness | Compressor-forward: higher ratio, faster attack/release, auto makeup |
-| Telephone / Lo-Fi | Aggressive band-limiting + heavily-driven Harmonic character for creative use |
+| Telephone / Lo-Fi | Aggressive band-limiting plus an odd-leaning Harmonic band driven around mid-range, for creative use |
 
 User presets save to the standard per-user preset directory
 (`~/Library/Audio/Presets/Allan Sargeant/Zero EQ/` on macOS) as plain APVTS-state XML —
