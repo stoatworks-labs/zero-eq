@@ -3,6 +3,13 @@
 namespace ZeroEQ
 {
 
+// Gets every band and dynamic detector ready for playback at the host's sample rate.
+//
+// The 0.02 figure gives each of frequency, gain and Q a 20-millisecond glide. Jumping a
+// filter straight to a new setting produces an audible click, so when a knob is turned the
+// value slides to its destination over that period instead. firstBlock is raised here so
+// the very first block after starting snaps directly to the current knob positions rather
+// than gliding up from silence.
 void EQEngine::prepare(const juce::dsp::ProcessSpec& spec)
 {
     sampleRate = spec.sampleRate;
@@ -21,6 +28,8 @@ void EQEngine::prepare(const juce::dsp::ProcessSpec& spec)
     firstBlock = true;
 }
 
+// Clears every filter's memory of the audio that came before. Called when playback stops
+// or the transport jumps, so old audio can't bleed into the new position as a click.
 void EQEngine::reset()
 {
     for (auto& band : bands)
@@ -30,6 +39,19 @@ void EQEngine::reset()
     firstBlock = true;
 }
 
+// The main entry point: reads the current knob positions and applies the whole EQ to a
+// block of audio in place.
+//
+// For each band in turn it collects that band's settings, lets any dynamic behaviour
+// adjust the gain based on what the audio is doing, then runs the audio through the band.
+// Bands are applied one after another, so their effects stack.
+//
+// Solo is handled across all bands first, because soloing one band has to mute the others,
+// which can't be decided while looking at a single band in isolation.
+//
+// sidechainBuffer is the optional external input: a band set to sidechain reacts to that
+// signal instead of the audio passing through, which is how ducking one instrument against
+// another is done. It may legitimately be empty when the host has nothing connected.
 void EQEngine::updateAndProcess(juce::AudioBuffer<float>& buffer, juce::AudioProcessorValueTreeState& apvts,
                                  const juce::AudioBuffer<float>& sidechainBuffer)
 {

@@ -4,6 +4,11 @@
 namespace ZeroEQ
 {
 
+// Called before playback starts, and again if the sample rate changes.
+//
+// The analysis filter is deliberately set up as mono: the channels are summed before
+// measurement so both get an identical gain change. Measuring per channel would let a loud
+// sound on one side move only that side and smear the stereo image.
 void DynamicEQDetector::prepare(const juce::dsp::ProcessSpec& spec)
 {
     sampleRate = spec.sampleRate;
@@ -13,6 +18,8 @@ void DynamicEQDetector::prepare(const juce::dsp::ProcessSpec& spec)
     reset();
 }
 
+// Forgets the measured level and the current gain movement, so playback restarts from
+// rest rather than resuming part-way through a reaction.
 void DynamicEQDetector::reset()
 {
     analysisFilter.reset();
@@ -28,6 +35,19 @@ DynamicEQDetector::Coeffs::Ptr DynamicEQDetector::designAnalysisFilter(FilterTyp
     return EQBand::designRegionIsolationFilter(bandType, freqHz, q, sr);
 }
 
+// Works out how much this band's gain should move right now, in decibels, and returns it.
+//
+// This is what makes a band "dynamic": instead of a fixed boost or cut, the band reacts to
+// how much energy the audio currently has *in that band's own frequency region*. A
+// de-esser is the everyday example - the band only dips when there is actually sibilance
+// present, and leaves the rest of the vocal alone.
+//
+// It listens rather than alters: the audio is filtered down to the band's region purely to
+// measure it, and this function returns a number for the caller to apply. The buffer it is
+// given is read-only and never modified.
+//
+// Downward means "pull back when the region gets loud", Upward means "lift when the region
+// gets quiet", and rangeDb caps how far either can go.
 float DynamicEQDetector::process(const juce::AudioBuffer<float>& buffer, FilterType bandType,
                                   float freqHz, float q, const Params& params)
 {

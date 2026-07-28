@@ -5,6 +5,16 @@ namespace ZeroEQ
 
 namespace
 {
+    // Estimates the signal's value *between* two samples, using the two neighbours on
+    // either side to follow the waveform's curve rather than cutting the corner with a
+    // straight line.
+    //
+    // This is what "true peak" metering needs. Digital audio only stores the level at
+    // fixed instants, but the real waveform reconstructed on playback keeps moving between
+    // them, and its actual crest can sit higher than any stored sample. A meter that only
+    // reported stored samples would read safe while the signal was in fact clipping.
+    //
+    // t slides from 0 at y1 to 1 at y2.
     float catmullRom(float y0, float y1, float y2, float y3, float t)
     {
         const float a0 = -0.5f * y0 + 1.5f * y1 - 1.5f * y2 + 0.5f * y3;
@@ -31,6 +41,20 @@ void LevelMeter::reset()
     clipHoldSamplesRemaining.store(0);
 }
 
+// Measures a block of audio and updates the meter readings. Read-only - it never alters
+// the audio.
+//
+// Three readings are produced at once because they answer different questions:
+//   - peak      the highest stored sample; catches brief transients
+//   - true peak the highest point of the reconstructed waveform, including between
+//               samples, which is what actually matters for clipping
+//   - VU        a slow, averaged reading that tracks perceived loudness
+//
+// Peak rises instantly but falls back gradually, so a momentary spike stays visible long
+// enough to read instead of vanishing before the display refreshes.
+//
+// The results are published through atomics because the GUI reads them on a different
+// thread while audio keeps processing.
 void LevelMeter::process(const juce::AudioBuffer<float>& buffer)
 {
     const int numSamples = buffer.getNumSamples();

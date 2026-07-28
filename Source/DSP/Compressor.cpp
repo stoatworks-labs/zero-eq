@@ -3,12 +3,17 @@
 namespace ZeroEQ
 {
 
+// Called by the host before playback starts, and again whenever the sample rate changes.
+// Every timing constant here is expressed in milliseconds and converted using the sample
+// rate, so the compressor has to be told what that rate is before it can run.
 void Compressor::prepare(const juce::dsp::ProcessSpec& spec)
 {
     sampleRate = spec.sampleRate;
     reset();
 }
 
+// Forgets how much the compressor was turning the signal down. Without this, restarting
+// playback could resume mid-duck and audibly pump on the first note.
 void Compressor::reset()
 {
     smoothedGainReductionDb = 0.0f;
@@ -26,6 +31,17 @@ float Compressor::computeAutoMakeup(const Params& p)
     return juce::jlimit(0.0f, 24.0f, reductionAtFullScale * 0.5f);
 }
 
+// Compresses a block of audio in place: makes the loud parts quieter so the overall level
+// is more even.
+//
+// Each sample goes through four steps - measure how loud the signal currently is, look up
+// on the threshold/ratio curve how much quieter it *should* be, ease towards that amount
+// gradually rather than instantly (attack and release), then apply the resulting volume
+// change to every channel.
+//
+// Both channels are turned down by the same amount ("stereo-linked"), driven by whichever
+// channel is louder. Ducking each channel independently would make a loud sound on one
+// side pull the stereo image towards the other.
 void Compressor::process(juce::AudioBuffer<float>& buffer, const Params& params)
 {
     const int numChannels = buffer.getNumChannels();
@@ -63,7 +79,11 @@ void Compressor::process(juce::AudioBuffer<float>& buffer, const Params& params)
 
         const float inputDb = juce::Decibels::gainToDecibels(detectorLevel, -100.0f);
 
-        // Static soft-knee curve (Giannoulis/Reiss tutorial form).
+        // Static soft-knee curve (Giannoulis/Reiss tutorial form). Three cases: well below
+        // the threshold, leave the level alone; well above it, divide the excess by the
+        // ratio; and within the "knee" straddling the threshold, follow a curve that joins
+        // those two straight lines smoothly, so compression eases in instead of switching
+        // on abruptly at one exact level.
         float outputDb;
         const float delta = inputDb - params.thresholdDb;
         if (delta < -knee * 0.5f)
