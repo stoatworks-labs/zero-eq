@@ -150,3 +150,10 @@ Everything on the roadmap is shipped. The single outstanding item is real-world:
 **it has never been run on real audio hardware in a live signal chain.** Analytical checks,
 numeric harnesses, `pluginval`, `auval` and hosting in REAPER all pass — but that is not the
 same as a live gig. Treat any "it works" claim about live use as unverified.
+
+## Diagnostics
+
+`Source/Diag/` gives a rotating log and an in-memory ring. **`installCrashHandler` is
+`false` and must stay that way**: this plugin runs inside a DAW, and a process-wide signal
+handler here would intercept faults that are not ours and interfere with the host's own
+handling. Log through the `CP_LOG_*` macros, never `DBG` or `std::cout`.

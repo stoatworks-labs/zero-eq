@@ -1,5 +1,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Diag/Diag.h"
+
+#include <mutex>
 
 ZeroEQAudioProcessor::ZeroEQAudioProcessor()
     : AudioProcessor(BusesProperties()
@@ -9,6 +12,24 @@ ZeroEQAudioProcessor::ZeroEQAudioProcessor()
       apvts(*this, nullptr, "PARAMETERS", ZeroEQ::createParameterLayout()),
       presetManager(apvts)
 {
+    // Once per process, however many instances the host loads.
+    //
+    // `installCrashHandler = false` is the important part: this plugin lives
+    // inside someone else's process. A process-wide signal handler here would
+    // intercept crashes that are not ours and interfere with the host's own
+    // handling — a plugin has no business deciding what happens when a DAW
+    // dies. We still get the log, the ring and the diagnostics bundle.
+    static std::once_flag diagOnce;
+    std::call_once(diagOnce, []
+    {
+        cp::diag::Options options;
+        options.appName = "ZeroEQ";
+        options.envPrefix = "ZEROEQ";
+        options.version = JucePlugin_VersionString;
+        options.installCrashHandler = false;
+        cp::diag::init(options);
+        CP_LOG_INFO ("plugin loaded host=" + juce::String (juce::PluginHostType().getHostDescription()));
+    });
 }
 
 void ZeroEQAudioProcessor::setCurrentProgram(int index)
