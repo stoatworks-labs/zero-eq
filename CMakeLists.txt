@@ -15,6 +15,27 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(JUCE)
 
+# --------------------------------------------------------------------------------------
+# Build identity for crash reports. A compiled binary cannot read its own git revision at
+# runtime, and a report carrying only a version number cannot tell a released build from
+# one three commits past the tag. `-dirty` means uncommitted changes were built.
+# --------------------------------------------------------------------------------------
+find_package(Git QUIET)
+set(ZEROEQ_GIT_REV "unknown")
+if(GIT_FOUND)
+    execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short=12 HEAD
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE ZEROEQ_GIT_REV OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+    execute_process(COMMAND ${GIT_EXECUTABLE} status --porcelain --untracked-files=no
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE ZEROEQ_GIT_DIRTY OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+    if(NOT ZEROEQ_GIT_REV)
+        set(ZEROEQ_GIT_REV "unknown")
+    elseif(ZEROEQ_GIT_DIRTY)
+        set(ZEROEQ_GIT_REV "${ZEROEQ_GIT_REV}-dirty")
+    endif()
+endif()
+
 juce_add_plugin(ZeroEQ
     COMPANY_NAME "Allan Sargeant"
     BUNDLE_ID "com.allansargeant.zeroeq"
@@ -36,6 +57,7 @@ juce_generate_juce_header(ZeroEQ)
 
 target_sources(ZeroEQ
     PRIVATE
+        Source/Diag/Diag.cpp
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
         Source/PresetManager.cpp
@@ -60,6 +82,7 @@ target_compile_definitions(ZeroEQ
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_DISPLAY_SPLASH_SCREEN=0
+        DIAG_GIT_REV="${ZEROEQ_GIT_REV}"
 )
 
 target_link_libraries(ZeroEQ

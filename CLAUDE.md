@@ -23,3 +23,10 @@ broadband saturator as a "harmonic EQ" for four releases because it was verified
 *single tone at the band's own frequency* — an input for which correct and incorrect
 behaviour are byte-identical. For anything frequency-selective, the test signal needs
 content both inside and outside the region under test.
+
+## Diagnostics
+
+`Source/Diag/` gives a rotating log and an in-memory ring. **`installCrashHandler` is
+`false` and must stay that way**: this plugin runs inside a DAW, and a process-wide signal
+handler here would intercept faults that are not ours and interfere with the host's own
+handling. Log through the `CP_LOG_*` macros, never `DBG` or `std::cout`.
