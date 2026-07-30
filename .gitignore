@@ -7,3 +7,5 @@ _deps/
 DerivedData/
 CMakeUserPresets.json
 .cache/
+dist-release/
+build-release/

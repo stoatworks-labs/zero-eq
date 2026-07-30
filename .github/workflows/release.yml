@@ -25,8 +25,11 @@ jobs:
           - { name: linux-aarch64,   os: ubuntu-24.04-arm, cmake_arch: '',        pkgarch: arm64 }
           - { name: windows-x86_64,  os: windows-latest,   cmake_arch: '-A x64'   }
           - { name: windows-aarch64, os: windows-11-arm,   cmake_arch: '-A ARM64' }
-          - { name: macos-x86_64,    os: macos-14,         cmake_arch: '-DCMAKE_OSX_ARCHITECTURES=x86_64' }
-          - { name: macos-aarch64,   os: macos-14,         cmake_arch: '-DCMAKE_OSX_ARCHITECTURES=arm64' }
+          # One universal macOS build rather than two single-arch ones. A host
+          # loads whichever slice matches its own process, so a universal
+          # bundle is the only shape that works in both Intel and Apple
+          # Silicon DAWs without the user having to pick.
+          - { name: macos-universal, os: macos-14,         cmake_arch: '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' }
     steps:
       - uses: actions/checkout@v4
 
@@ -77,6 +80,52 @@ jobs:
             zip -r "../zero-eq-${{ matrix.name }}.zip" ./*
           fi
 
+      - name: Installers (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        # A plugin does not install to one place, so the .pkg is multi-part:
+        # VST3 to /Library/Audio/Plug-Ins/VST3, AU to .../Components and the
+        # standalone to /Applications. The .dmg carries all three for anyone
+        # who would rather drag them.
+        #
+        # Ad-hoc signing is required, not cosmetic: an unsigned bundle is
+        # rejected by the host's plugin scan on Apple Silicon.
+        run: |
+          source scripts/release-lib.sh
+          version="${{ steps.ver.outputs.version }}"
+          rl_init "Zero EQ" zero-eq "$version" com.stoatworks.zero-eq "$GITHUB_WORKSPACE"
+
+          art="build/ZeroEQ_artefacts/Release"
+          vst3="$art/VST3/Zero EQ.vst3"
+          au="$art/AU/Zero EQ.component"
+          app="$art/Standalone/Zero EQ.app"
+
+          # Assert the universal slice rather than trusting the build log — a
+          # single-arch bundle compiles and reports success just the same.
+          for b in "$vst3" "$au" "$app"; do
+            [ -d "$b" ] || continue
+            bin="$b/Contents/MacOS/Zero EQ"
+            [ -f "$bin" ] || continue
+            archs="$(lipo -archs "$bin")"
+            echo "$(basename "$b"): $archs"
+            case "$archs" in *arm64*x86_64*|*x86_64*arm64*) ;; *)
+              echo "expected universal, got: $archs" >&2; exit 1 ;;
+            esac
+            rl_adhoc_sign "$b"
+          done
+
+          stage="$RUNNER_TEMP/stage-mac"
+          rm -rf "$stage"; mkdir -p "$stage"
+          [ -d "$vst3" ] && cp -R "$vst3" "$stage/"
+          [ -d "$au" ]   && cp -R "$au"   "$stage/"
+          [ -d "$app" ]  && cp -R "$app"  "$stage/"
+          cp README.md LICENSE "$stage/" 2>/dev/null || true
+          rl_dmg "${{ matrix.name }}" "$stage"
+          rl_pkg_multi "${{ matrix.name }}" \
+            "$vst3:/Library/Audio/Plug-Ins/VST3" \
+            "$au:/Library/Audio/Plug-Ins/Components" \
+            "$app:/Applications"
+
       - name: Package .deb/.rpm (Linux, best-effort)
         if: startsWith(matrix.os, 'ubuntu')
         shell: bash
@@ -110,11 +159,58 @@ jobs:
             *.zip
             *.deb
             *.rpm
+            *.dmg
+            *.pkg
+          if-no-files-found: error
+
+  windows-installers:
+    name: Windows installers
+    needs: build
+    runs-on: ubuntu-latest
+    # makensis cross-compiles, so both architectures are produced here from the
+    # zips the Windows jobs uploaded. Building them on the Windows runners is
+    # not an option for arm64: that image cannot execute the 32-bit makensis.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Install NSIS
+        run: sudo apt-get update && sudo apt-get install -y nsis
+
+      - name: Build installers
+        shell: bash
+        run: |
+          source scripts/release-lib.sh
+          version="${GITHUB_REF_NAME#v}"
+          [ -n "$version" ] || version="$(sed -n 's/^project(ZeroEQ VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)"
+          rl_init "Zero EQ" zero-eq "$version" com.stoatworks.zero-eq "$PWD/installers"
+          for arch in x86_64 aarch64; do
+            zip="$(find artifacts -name "zero-eq-windows-${arch}.zip" | head -1)"
+            if [ -z "$zip" ]; then
+              echo "no build artefact for windows-${arch}, skipping"
+              continue
+            fi
+            stage="$RUNNER_TEMP/stage-${arch}"
+            rm -rf "$stage"; mkdir -p "$stage"
+            unzip -q "$zip" -d "$stage"
+            # A plugin installer has no shortcut to create, so --cli keeps it
+            # to files plus an Add/Remove Programs entry.
+            rl_nsis "windows-${arch}" "$stage" --cli
+          done
+          ls -l installers
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zero-eq-windows-installers
+          path: installers/*
           if-no-files-found: error
 
   release:
     name: Publish release
-    needs: build
+    needs: [build, windows-installers]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
