@@ -14,7 +14,7 @@ act as a dynamic EQ or generate harmonics, plus a feed-forward compressor, prese
 ballistics-accurate metering.
 
 Public repo, MIT-ish posture, ships a user-facing AI-assisted disclaimer in the README.
-Tagged v0.2.0 through v0.7.0; all roadmap items are shipped and there is no backlog.
+Tagged v0.2.0 through v0.7.1; all roadmap items are shipped and there is no backlog.
 
 ## 2. The one rule that matters most
 

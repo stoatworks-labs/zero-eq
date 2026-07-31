@@ -1,6 +1,6 @@
 # zero-eq (ZeroEQ)
 
-Zero-latency EQ + dynamic-EQ (+ sidechain) + band-isolated harmonic generation + compressor + presets + metering plugin. VST3/AU, JUCE/C++, CMake. Tagged v0.2.0–v0.7.0; all roadmap items shipped (no backlog).
+Zero-latency EQ + dynamic-EQ (+ sidechain) + band-isolated harmonic generation + compressor + presets + metering plugin. VST3/AU, JUCE/C++, CMake. Tagged v0.2.0–v0.7.1; all roadmap items shipped (no backlog).
 
 ## Commands (CMake)
 - Configure: `cmake -B build -DCMAKE_BUILD_TYPE=Release`
