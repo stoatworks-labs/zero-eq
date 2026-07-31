@@ -12,9 +12,63 @@
 
 A zero-added-latency parametric EQ + compressor VST3/AU plugin, built with JUCE.
 
-![Zero EQ plugin GUI: an 8-band EQ curve with draggable per-band nodes over a spectrum display, input/output meters, a Band panel with type/character/slope, Harmonic Blend and a Dynamic EQ section, plus a feed-forward Compressor panel](docs/screenshots/plugin.png)
+![Zero EQ plugin GUI: the preset bar, an 8-band EQ curve with draggable per-band nodes,
+input/output meters, a Band panel with type/character/slope, Harmonic Blend and a Dynamic
+EQ section with sidechain selection, plus a feed-forward Compressor panel](docs/screenshots/plugin.png)
 
-*Real screenshot of the Standalone build.*
+*Real screenshot of the Standalone build, on the "Warm Bus (Harmonic)" factory preset —
+30 Hz high-pass, a broad presence lift and a high roll-off, with the compressor at 2:1.
+The standalone wrapper's own menu bar is cropped off; everything shown is the plugin
+editor as a host displays it.*
+
+<!-- downloads:start -->
+
+## Download
+
+**[v0.7.1](https://github.com/stoatworks-labs/zero-eq/releases/tag/v0.7.1)** — prebuilt for macOS, Windows and Linux. Pick your platform:
+
+<details>
+<summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`zero-eq-0.7.1-macos-universal.dmg`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-macos-universal.dmg) | 11 MB |
+| Universal (Apple Silicon + Intel) · .pkg installer | [`zero-eq-0.7.1-macos-universal.pkg`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-macos-universal.pkg) | 10 MB |
+| Universal (Apple Silicon + Intel) · .zip archive | [`zero-eq-macos-universal.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-macos-universal.zip) | 10 MB |
+
+</details>
+
+<details>
+<summary><b>Windows</b> — x64, ARM64</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| x64 · .exe installer | [`zero-eq-0.7.1-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-windows-x86_64-setup.exe) | 3.0 MB |
+| ARM64 · .exe installer | [`zero-eq-0.7.1-windows-aarch64-setup.exe`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-windows-aarch64-setup.exe) | 2.7 MB |
+| x64 · .zip archive | [`zero-eq-windows-x86_64.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-windows-x86_64.zip) | 5.6 MB |
+| ARM64 · .zip archive | [`zero-eq-windows-aarch64.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-windows-aarch64.zip) | 5.5 MB |
+
+</details>
+
+<details>
+<summary><b>Linux</b> — x64, ARM64</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| x64 · .deb package (Debian/Ubuntu) | [`zero-eq_0.7.1_amd64.deb`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq_0.7.1_amd64.deb) | 2.2 MB |
+| ARM64 · .deb package (Debian/Ubuntu) | [`zero-eq_0.7.1_arm64.deb`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq_0.7.1_arm64.deb) | 2.3 MB |
+| x64 · .rpm package (Fedora/RHEL) | [`zero-eq-0.7.1-1.x86_64.rpm`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-1.x86_64.rpm) | 2.3 MB |
+| ARM64 · .rpm package (Fedora/RHEL) | [`zero-eq-0.7.1-1.aarch64.rpm`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-1.aarch64.rpm) | 2.3 MB |
+| x64 · .zip archive | [`zero-eq-linux-x86_64.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-linux-x86_64.zip) | 4.4 MB |
+| ARM64 · .zip archive | [`zero-eq-linux-aarch64.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-linux-aarch64.zip) | 4.4 MB |
+
+</details>
+
+All builds, checksums and release notes: [github.com/stoatworks-labs/zero-eq/releases](https://github.com/stoatworks-labs/zero-eq/releases).
+
+These builds are unsigned, so macOS and Windows each warn once on first launch — see [Unsigned builds — macOS Gatekeeper & Windows SmartScreen](#unsigned-builds--macos-gatekeeper--windows-smartscreen) for the one-time fix.
+
+<!-- downloads:end -->
 
 ## Goals
 
@@ -210,52 +264,25 @@ signal, so nothing it does can add latency:
 
 ## Unsigned builds — macOS Gatekeeper & Windows SmartScreen
 
-The release plugins and standalone app are **not code-signed or notarized** —
-that needs paid Apple / Windows developer certificates this project doesn't
-carry. They're safe to run; the OS just can't verify a publisher. On macOS this
-matters more than usual: a quarantined plugin will make your DAW **skip it or
-fail validation** rather than show a friendly prompt.
+The released plugins are **not code-signed or notarized** — that needs paid Apple
+and Microsoft developer certificates this project doesn't carry. On macOS this bites
+harder than usual: a quarantined plugin makes your host **skip it or fail validation**
+rather than show a friendly prompt.
 
-### macOS
+- **macOS** — clear the quarantine flag after copying the bundle into place, then
+  rescan plugins in your host:
 
-After copying the bundles into place, clear the quarantine flag:
+  ```sh
+  xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/VST3/Zero EQ.vst3"
+  xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/Components/Zero EQ.component"
+  ```
 
-```sh
-xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/VST3/Zero EQ.vst3"
-xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/Components/Zero EQ.component"
-```
+- **Windows** — plugin files aren't gated the way `.exe` files are, so your host loads
+  them normally. The **installer** trips SmartScreen: **More info** → **Run anyway**.
+- **Linux** — no signing gate.
 
-(Use `/Library/...` instead of `$HOME/Library/...` if you installed them
-system-wide.) Then **rescan plugins** in your DAW. If the AU still won't appear,
-the Audio Unit cache may be stale — quit the host and run
-`killall -9 AudioComponentRegistrar`, or just reboot. For the **standalone** app:
-right-click → **Open** the first time, or
-`xattr -dr com.apple.quarantine "Zero EQ.app"`.
-
-### Windows
-
-Windows doesn't gate `.vst3` plugins the way it gates `.exe` files, so your DAW
-loads `Zero EQ.vst3` normally. The **standalone** `.exe` may trip SmartScreen —
-**More info → Run anyway**.
-
-### Linux
-
-No signing gate — copy `Zero EQ.vst3` into `~/.vst3/` and rescan.
-
-### Signing it yourself (optional)
-
-macOS ad-hoc signing stops the host from re-quarantining on your own machine
-(it is **not** notarization — it won't clear Gatekeeper on someone else's Mac):
-
-```sh
-codesign --force --deep --sign - "Zero EQ.vst3"
-codesign --force --deep --sign - "Zero EQ.component"
-```
-
-Distributing without warnings needs an **Apple Developer Program** membership
-($99/yr) + a *Developer ID Application* certificate — sign each bundle with the
-hardened runtime (`codesign --options runtime`) and notarize the containing
-`.zip`/`.dmg` with `xcrun notarytool`, then `xcrun stapler staple` the `.dmg`.
+Per-artifact steps, self-signing and checksum verification:
+**[docs/UNSIGNED.md](docs/UNSIGNED.md)**.
 
 ## Status
 
