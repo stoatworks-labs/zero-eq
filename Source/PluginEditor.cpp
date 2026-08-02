@@ -22,6 +22,14 @@ ZeroEQAudioProcessorEditor::ZeroEQAudioProcessorEditor(ZeroEQAudioProcessor& p)
         bandControlPanel.setSelectedBand(band);
     };
 
+    addAndMakeVisible(aboutButton);
+    aboutButton.setTooltip("About Zero EQ");
+    aboutButton.onClick = [this] { aboutPanel.setVisible(true); };
+
+    // Hidden until asked for, and on top of everything when it is shown.
+    addChildComponent(aboutPanel);
+    aboutPanel.setAlwaysOnTop(true);
+
     setResizable(true, true);
     setResizeLimits(950, 830, 1700, 1230);
     setSize(1150, 980);
@@ -43,13 +51,19 @@ void ZeroEQAudioProcessorEditor::paint(juce::Graphics& g)
 
     g.setColour(ZeroEQ::ZeroEQLookAndFeel::textDim);
     g.setFont(juce::Font(juce::FontOptions(11.0f)));
-    g.drawText("zero-latency EQ + compressor", titleArea.reduced(12, 0), juce::Justification::centredRight);
+    // Right-aligned, but clear of the About button that resized() puts in the
+    // last 30 px of this strip.
+    g.drawText("zero-latency EQ + compressor", titleArea.reduced(12, 0).withTrimmedRight(30),
+               juce::Justification::centredRight);
 }
 
 void ZeroEQAudioProcessorEditor::resized()
 {
+    aboutPanel.setBounds(getLocalBounds());
+
     auto area = getLocalBounds();
-    area.removeFromTop(32); // title bar
+    auto titleArea = area.removeFromTop(32); // title bar
+    aboutButton.setBounds(titleArea.removeFromRight(30).reduced(4, 6));
 
     auto presetBarArea = area.removeFromTop(30).reduced(8, 4);
     presetBar.setBounds(presetBarArea);
