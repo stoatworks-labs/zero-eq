@@ -32,6 +32,12 @@ Build it, or take a release build. On macOS the VST3 goes to
 
 ## The EQ
 
+![The Zero EQ window: the response curve with eight numbered band handles, input and output meters down the left, the selected band's controls bottom left, and the compressor bottom right.](screenshots/plugin.png)
+
+*Everything is on one surface. Band 1 is selected below the curve, with its dynamic-EQ section
+underneath it and the compressor alongside — so the EQ move and the gain reduction reacting to it
+are visible at the same time.*
+
 ### Working with the curve
 The main display is a spectrum analyser with your EQ curve over it, and a draggable node per
 band.
