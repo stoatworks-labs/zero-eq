@@ -94,3 +94,32 @@ target_link_libraries(ZeroEQ
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+# --------------------------------------------------------------------------------------
+# zqfilm — renders the editor to a PNG sequence for the project video.
+#
+# Not a screen recording: see the comment at the top of tools/zqfilm.cpp. The plugin has
+# no control surface to drive from outside, and photographing a window for 42 seconds
+# needs a quiet machine and still produces blank frames; this runs the real processor and
+# the real editor offscreen and is reproducible.
+# --------------------------------------------------------------------------------------
+juce_add_console_app(zqfilm PRODUCT_NAME "zqfilm")
+juce_generate_juce_header(zqfilm)
+target_sources(zqfilm PRIVATE tools/zqfilm.cpp)
+target_compile_definitions(zqfilm PUBLIC
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_DISPLAY_SPLASH_SCREEN=0
+    # Needed for runDispatchLoopUntil, which is what lets the editor's timers repaint
+    # against each frame's new state before it is snapshotted.
+    JUCE_MODAL_LOOPS_PERMITTED=1
+    DIAG_GIT_REV="${ZEROEQ_GIT_REV}")
+target_include_directories(zqfilm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# Linking the plugin target rather than re-listing its sources: that is what carries the
+# JucePlugin_* defines the processor header needs, which a console app does not get on its own.
+target_link_libraries(zqfilm PRIVATE
+    ZeroEQ
+    juce::juce_audio_utils
+    juce::juce_dsp
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_warning_flags)
