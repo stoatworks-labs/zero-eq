@@ -14,6 +14,10 @@ A zero-added-latency parametric EQ + compressor VST3/AU plugin, built with JUCE.
 
 **Video:** [What it does, in 45 seconds](https://www.youtube.com/watch?v=lhbbMLN6E6g)
 
+**Try it in the browser:** [zero-eq-sim.allan-sargeant.workers.dev](https://zero-eq-sim.allan-sargeant.workers.dev) —
+the plugin's own DSP compiled to WebAssembly, with built-in signal sources and file
+playback (audio never leaves your browser). See [`web/`](web/README.md).
+
 ![Zero EQ plugin GUI: the preset bar, an 8-band EQ curve with draggable per-band nodes,
 input/output meters, a Band panel with type/character/slope, Harmonic Blend and a Dynamic
 EQ section with sidechain selection, plus a feed-forward Compressor panel](docs/screenshots/plugin.png)

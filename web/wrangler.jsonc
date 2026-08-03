@@ -1,0 +1,9 @@
+// Zero EQ web simulator — static-assets-only Worker.
+// Deploy from web/: cf-run npx wrangler deploy  (see reference_cloudflare_access)
+{
+  "name": "zero-eq-sim",
+  "compatibility_date": "2026-08-03",
+  "assets": {
+    "directory": "./public"
+  }
+}
