@@ -320,3 +320,7 @@ passes clean:
 
 - [ ] Not yet tested against real (non-silent) audio hardware in a live signal chain.
 - No linear-phase mode — intentionally out of scope (zero latency was the explicit goal).
+
+<!-- attributions:start -->
+This project is built on other people's work — see [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+<!-- attributions:end -->
