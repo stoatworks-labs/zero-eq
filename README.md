@@ -72,7 +72,7 @@ editor as a host displays it.*
 
 All builds, checksums and release notes: [github.com/stoatworks-labs/zero-eq/releases](https://github.com/stoatworks-labs/zero-eq/releases).
 
-macOS builds are signed and notarised and open normally. The Windows builds are unsigned, so SmartScreen warns once on first launch — see [Windows SmartScreen](#windows-smartscreen) for the one-time click-through.
+macOS builds are signed and notarised and open normally. The Windows builds are unsigned, so SmartScreen warns once — see [Windows SmartScreen](#windows-smartscreen) for the one-time click-through.
 
 <!-- downloads:end -->
 
