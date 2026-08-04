@@ -72,7 +72,7 @@ editor as a host displays it.*
 
 All builds, checksums and release notes: [github.com/stoatworks-labs/zero-eq/releases](https://github.com/stoatworks-labs/zero-eq/releases).
 
-These builds are unsigned, so macOS and Windows each warn once on first launch — see [Unsigned builds — macOS Gatekeeper & Windows SmartScreen](#unsigned-builds--macos-gatekeeper--windows-smartscreen) for the one-time fix.
+macOS builds are signed and notarised and open normally. The Windows builds are unsigned, so SmartScreen warns once on first launch — see [Windows SmartScreen](#windows-smartscreen) for the one-time click-through.
 
 <!-- downloads:end -->
 
@@ -268,21 +268,13 @@ signal, so nothing it does can add latency:
   nominally unity-gain stage isn't always bit-exact 1.0 after a normalized-parameter
   round-trip, so a razor-edge threshold can miss a genuinely full-scale sample).
 
-## Unsigned builds — macOS Gatekeeper & Windows SmartScreen
+## Windows SmartScreen
 
-The released plugins are **not code-signed or notarized** — that needs paid Apple
-and Microsoft developer certificates this project doesn't carry. On macOS this bites
-harder than usual: a quarantined plugin makes your host **skip it or fail validation**
-rather than show a friendly prompt.
+The released plugins are **Developer ID-signed and notarised** on macOS, so your
+host loads them with no quarantine step and no failed validation. The Windows
+binaries are **not** code-signed.
 
-- **macOS** — clear the quarantine flag after copying the bundle into place, then
-  rescan plugins in your host:
-
-  ```sh
-  xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/VST3/Zero EQ.vst3"
-  xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/Components/Zero EQ.component"
-  ```
-
+- **macOS** — nothing to do. Copy the bundle into place and rescan.
 - **Windows** — plugin files aren't gated the way `.exe` files are, so your host loads
   them normally. The **installer** trips SmartScreen: **More info** → **Run anyway**.
 - **Linux** — no signing gate.
