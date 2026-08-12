@@ -155,7 +155,7 @@ jobs:
           nfpm package -f nfpm.yaml -p rpm
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: zero-eq-${{ matrix.name }}
           path: |
@@ -205,7 +205,7 @@ jobs:
           done
           ls -l installers
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zero-eq-windows-installers
           path: installers/*
