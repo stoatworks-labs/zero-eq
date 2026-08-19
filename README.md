@@ -31,16 +31,16 @@ editor as a host displays it.*
 
 ## Download
 
-**[v0.7.1](https://github.com/stoatworks-labs/zero-eq/releases/tag/v0.7.1)** — prebuilt for macOS, Windows and Linux. Pick your platform:
+**[v0.8.0](https://github.com/stoatworks-labs/zero-eq/releases/tag/v0.8.0)** — prebuilt for macOS, Windows and Linux. Pick your platform:
 
 <details>
 <summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
 
 | Build | Download | Size |
 | --- | --- | --- |
-| Universal (Apple Silicon + Intel) · .dmg disk image | [`zero-eq-0.7.1-macos-universal.dmg`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-macos-universal.dmg) | 11 MB |
-| Universal (Apple Silicon + Intel) · .pkg installer | [`zero-eq-0.7.1-macos-universal.pkg`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-macos-universal.pkg) | 10 MB |
-| Universal (Apple Silicon + Intel) · .zip archive | [`zero-eq-macos-universal.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-macos-universal.zip) | 10 MB |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`zero-eq-0.8.0-macos-universal.dmg`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.8.0/zero-eq-0.8.0-macos-universal.dmg) | 11 MB |
+| Universal (Apple Silicon + Intel) · .pkg installer | [`zero-eq-0.8.0-macos-universal.pkg`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.8.0/zero-eq-0.8.0-macos-universal.pkg) | 11 MB |
+| Universal (Apple Silicon + Intel) · .zip archive | [`zero-eq-macos-universal.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-macos-universal.zip) | 11 MB |
 
 </details>
 
@@ -49,8 +49,8 @@ editor as a host displays it.*
 
 | Build | Download | Size |
 | --- | --- | --- |
-| x64 · .exe installer | [`zero-eq-0.7.1-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-windows-x86_64-setup.exe) | 3.0 MB |
-| ARM64 · .exe installer | [`zero-eq-0.7.1-windows-aarch64-setup.exe`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-windows-aarch64-setup.exe) | 2.7 MB |
+| x64 · .exe installer | [`zero-eq-0.8.0-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.8.0/zero-eq-0.8.0-windows-x86_64-setup.exe) | 3.0 MB |
+| ARM64 · .exe installer | [`zero-eq-0.8.0-windows-aarch64-setup.exe`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.8.0/zero-eq-0.8.0-windows-aarch64-setup.exe) | 2.7 MB |
 | x64 · .zip archive | [`zero-eq-windows-x86_64.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-windows-x86_64.zip) | 5.6 MB |
 | ARM64 · .zip archive | [`zero-eq-windows-aarch64.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-windows-aarch64.zip) | 5.5 MB |
 
@@ -61,11 +61,11 @@ editor as a host displays it.*
 
 | Build | Download | Size |
 | --- | --- | --- |
-| x64 · .deb package (Debian/Ubuntu) | [`zero-eq_0.7.1_amd64.deb`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq_0.7.1_amd64.deb) | 2.2 MB |
-| ARM64 · .deb package (Debian/Ubuntu) | [`zero-eq_0.7.1_arm64.deb`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq_0.7.1_arm64.deb) | 2.3 MB |
-| x64 · .rpm package (Fedora/RHEL) | [`zero-eq-0.7.1-1.x86_64.rpm`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-1.x86_64.rpm) | 2.3 MB |
-| ARM64 · .rpm package (Fedora/RHEL) | [`zero-eq-0.7.1-1.aarch64.rpm`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.7.1/zero-eq-0.7.1-1.aarch64.rpm) | 2.3 MB |
-| x64 · .zip archive | [`zero-eq-linux-x86_64.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-linux-x86_64.zip) | 4.4 MB |
+| x64 · .deb package (Debian/Ubuntu) | [`zero-eq_0.8.0_amd64.deb`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.8.0/zero-eq_0.8.0_amd64.deb) | 2.3 MB |
+| ARM64 · .deb package (Debian/Ubuntu) | [`zero-eq_0.8.0_arm64.deb`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.8.0/zero-eq_0.8.0_arm64.deb) | 2.3 MB |
+| x64 · .rpm package (Fedora/RHEL) | [`zero-eq-0.8.0-1.x86_64.rpm`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.8.0/zero-eq-0.8.0-1.x86_64.rpm) | 2.3 MB |
+| ARM64 · .rpm package (Fedora/RHEL) | [`zero-eq-0.8.0-1.aarch64.rpm`](https://github.com/stoatworks-labs/zero-eq/releases/download/v0.8.0/zero-eq-0.8.0-1.aarch64.rpm) | 2.3 MB |
+| x64 · .zip archive | [`zero-eq-linux-x86_64.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-linux-x86_64.zip) | 4.5 MB |
 | ARM64 · .zip archive | [`zero-eq-linux-aarch64.zip`](https://github.com/stoatworks-labs/zero-eq/releases/latest/download/zero-eq-linux-aarch64.zip) | 4.4 MB |
 
 </details>
