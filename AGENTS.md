@@ -157,3 +157,10 @@ same as a live gig. Treat any "it works" claim about live use as unverified.
 `false` and must stay that way**: this plugin runs inside a DAW, and a process-wide signal
 handler here would intercept faults that are not ours and interfere with the host's own
 handling. Log through the `CP_LOG_*` macros, never `DBG` or `std::cout`.
+
+## Notes
+
+`docs/NOTES.md` carries this repo's working notes — current status, decisions
+already made, and the traps that have actually bitten. Read it before changing
+anything non-obvious. Cross-cutting fleet knowledge lives in
+[fleet-notes](https://github.com/stoatworks-labs/fleet-notes).
