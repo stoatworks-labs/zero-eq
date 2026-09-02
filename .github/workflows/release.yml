@@ -199,9 +199,9 @@ jobs:
             stage="$RUNNER_TEMP/stage-${arch}"
             rm -rf "$stage"; mkdir -p "$stage"
             unzip -q "$zip" -d "$stage"
-            # A plugin installer has no shortcut to create, so --cli keeps it
+            # A plugin installer has no shortcut to create, so --plain keeps it
             # to files plus an Add/Remove Programs entry.
-            rl_nsis "windows-${arch}" "$stage" --cli
+            rl_nsis "windows-${arch}" "$stage" --plain
           done
           ls -l installers
 
