@@ -15,6 +15,7 @@ void DynamicEQDetector::prepare(const juce::dsp::ProcessSpec& spec)
     auto monoSpec = spec;
     monoSpec.numChannels = 1;
     analysisFilter.prepare(monoSpec);
+    haveAnalysisDesign = false;   // redesign on the next block, not from the cache
     reset();
 }
 
@@ -51,11 +52,28 @@ DynamicEQDetector::Coeffs::Ptr DynamicEQDetector::designAnalysisFilter(FilterTyp
 float DynamicEQDetector::process(const juce::AudioBuffer<float>& buffer, FilterType bandType,
                                   float freqHz, float q, const Params& params)
 {
-    auto designed = designAnalysisFilter(bandType, freqHz, q, sampleRate);
-    if (analysisFilter.coefficients == nullptr)
-        analysisFilter.coefficients = designed;
-    else
-        *analysisFilter.coefficients = *designed;
+    // Only when the region being listened to has actually moved. See the note on
+    // the cache fields: this design does not depend on the detector's own output,
+    // so a band sitting at a fixed frequency and Q designs once and never again.
+    if (! haveAnalysisDesign
+        || bandType != lastAnalysisType
+        || ! juce::approximatelyEqual(freqHz, lastAnalysisFreq)
+        || ! juce::approximatelyEqual(q, lastAnalysisQ)
+        || ! juce::approximatelyEqual(sampleRate, lastAnalysisSampleRate)
+        || analysisFilter.coefficients == nullptr)
+    {
+        auto designed = designAnalysisFilter(bandType, freqHz, q, sampleRate);
+        if (analysisFilter.coefficients == nullptr)
+            analysisFilter.coefficients = designed;
+        else
+            *analysisFilter.coefficients = *designed;
+
+        haveAnalysisDesign     = true;
+        lastAnalysisType       = bandType;
+        lastAnalysisFreq       = freqHz;
+        lastAnalysisQ          = q;
+        lastAnalysisSampleRate = sampleRate;
+    }
 
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();

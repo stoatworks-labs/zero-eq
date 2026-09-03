@@ -9,6 +9,11 @@ void EQBand::prepare(const juce::dsp::ProcessSpec& spec)
     for (auto& stage : stages)
         stage.prepare(spec);
 
+    // prepare() rebuilds the per-channel filters, so the next update must design
+    // rather than trust its cache. Cheap, and it means nothing here depends on
+    // whether a re-prepare happened to keep the same sample rate.
+    haveDesign = false;
+
     const size_t numChannels = juce::jmax((size_t) 1, (size_t) spec.numChannels);
     harmonicShapers.assign(numChannels, HarmonicShaper());
 
@@ -128,19 +133,52 @@ std::vector<EQBand::Coeffs::Ptr> EQBand::design(FilterType type, float freqHz, f
 void EQBand::update(FilterType type, float freqHz, float gainDb, float q,
                      FilterCharacter character, FilterSlope slope, float harmonicBlend)
 {
-    auto designed = design(type, freqHz, gainDb, q, character, slope, currentSampleRate);
-    activeStageCount = juce::jmin((int) designed.size(), maxStages);
-    for (int i = 0; i < activeStageCount; ++i)
+    // Only redesign when something that shapes the filter has actually moved.
+    // Every Coeffs::make* allocates, and this runs on the audio thread; the stages
+    // below are written in place, so an unchanged band already holds the right
+    // coefficients and there is nothing to recompute. Same guard the isolation
+    // filter below has always had, applied to the design it was protecting the
+    // wrong half of.
+    //
+    // The comparison is against the values as passed — which are the SMOOTHED
+    // ones, and for a dynamic band include its gain delta. That is deliberate:
+    // those genuinely change the filter, so they must redesign. What this removes
+    // is the redesign of a band that is not moving at all, which was happening on
+    // every single block.
+    const bool designChanged = ! haveDesign
+                               || type != lastDesignType
+                               || character != lastDesignCharacter
+                               || slope != lastDesignSlope
+                               || ! juce::approximatelyEqual(freqHz, lastDesignFreq)
+                               || ! juce::approximatelyEqual(gainDb, lastDesignGainDb)
+                               || ! juce::approximatelyEqual(q, lastDesignQ)
+                               || ! juce::approximatelyEqual(currentSampleRate, lastDesignSampleRate);
+
+    if (designChanged)
     {
-        // Mutate the shared Coefficients object's contents in place rather than
-        // replacing the pointer: ProcessorDuplicator's per-channel Filters each hold
-        // their own reference to the coefficients captured at prepare() time, so
-        // reassigning stages[i].state here would only update the Duplicator's own
-        // bookkeeping field and never reach the actual per-channel filters.
-        if (stages[(size_t) i].state == nullptr)
-            stages[(size_t) i].state = designed[(size_t) i];
-        else
-            *stages[(size_t) i].state = *designed[(size_t) i];
+        auto designed = design(type, freqHz, gainDb, q, character, slope, currentSampleRate);
+        activeStageCount = juce::jmin((int) designed.size(), maxStages);
+        for (int i = 0; i < activeStageCount; ++i)
+        {
+            // Mutate the shared Coefficients object's contents in place rather than
+            // replacing the pointer: ProcessorDuplicator's per-channel Filters each hold
+            // their own reference to the coefficients captured at prepare() time, so
+            // reassigning stages[i].state here would only update the Duplicator's own
+            // bookkeeping field and never reach the actual per-channel filters.
+            if (stages[(size_t) i].state == nullptr)
+                stages[(size_t) i].state = designed[(size_t) i];
+            else
+                *stages[(size_t) i].state = *designed[(size_t) i];
+        }
+
+        haveDesign           = true;
+        lastDesignType       = type;
+        lastDesignFreq       = freqHz;
+        lastDesignGainDb     = gainDb;
+        lastDesignQ          = q;
+        lastDesignCharacter  = character;
+        lastDesignSlope      = slope;
+        lastDesignSampleRate = currentSampleRate;
     }
 
     harmonicEnabled = (character == FilterCharacter::Harmonic) && filterTypeHasGain(type);

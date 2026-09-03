@@ -103,6 +103,36 @@ target_link_libraries(ZeroEQ
 # needs a quiet machine and still produces blank frames; this runs the real processor and
 # the real editor offscreen and is reproducible.
 # --------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
+# DSP checks. No host, no audio device, no window — it counts allocations on the
+# processing path, which is the only way to see the invariant CLAUDE.md and AGENTS.md
+# section 4 state ("keep the audio thread lock-free and allocation-free") being kept or
+# broken. Nothing checked it before, and it was being broken on every block.
+# --------------------------------------------------------------------------------------
+juce_add_console_app(zqdsp PRODUCT_NAME "zqdsp")
+juce_generate_juce_header(zqdsp)
+target_sources(zqdsp PRIVATE
+    tools/zqdsp.cpp
+    Source/DSP/EQBand.cpp
+    Source/DSP/DynamicEQDetector.cpp
+    Source/DSP/HarmonicShaper.cpp)
+target_compile_definitions(zqdsp PUBLIC
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_DISPLAY_SPLASH_SCREEN=0)
+target_include_directories(zqdsp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(zqdsp PRIVATE
+    juce::juce_dsp
+    juce::juce_audio_basics
+    # PluginParameters.h, which the DSP headers include for FilterType and friends,
+    # also declares the APVTS layout.
+    juce::juce_audio_processors
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_warning_flags)
+
+enable_testing()
+add_test(NAME dsp COMMAND zqdsp)
+
 juce_add_console_app(zqfilm PRODUCT_NAME "zqfilm")
 juce_generate_juce_header(zqfilm)
 target_sources(zqfilm PRIVATE tools/zqfilm.cpp)

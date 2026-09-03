@@ -82,6 +82,22 @@ private:
     FilterType lastIsolationType = FilterType::Bell;
     float lastIsolationFreq = 0.0f;
     float lastIsolationQ = 0.0f;
+
+    // The same guard, for the MAIN coefficient design. Every Coeffs::make* call
+    // heap-allocates a reference-counted Coefficients object, and update() ran the
+    // whole design unconditionally on the audio thread — eight bands' worth of
+    // vector plus coefficient allocations on every processBlock, ~375 bursts a
+    // second at 48 kHz / 128 samples, each able to block on the allocator's lock.
+    // The stages already hold the designed values (update copies into them rather
+    // than swapping the pointer), so when nothing has moved there is nothing to do.
+    bool haveDesign = false;
+    FilterType lastDesignType = FilterType::Bell;
+    float lastDesignFreq = 0.0f;
+    float lastDesignGainDb = 0.0f;
+    float lastDesignQ = 0.0f;
+    FilterCharacter lastDesignCharacter = FilterCharacter::Modern;
+    FilterSlope lastDesignSlope = FilterSlope::Slope12;
+    double lastDesignSampleRate = 0.0;
 };
 
 } // namespace ZeroEQ

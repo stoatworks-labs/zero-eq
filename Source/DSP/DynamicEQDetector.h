@@ -49,6 +49,16 @@ private:
     juce::dsp::IIR::Filter<float> analysisFilter;
     double sampleRate = 44100.0;
 
+    // The analysis filter was redesigned on every block, on the audio thread, and
+    // Coeffs::make* allocates. It only depends on the band's type, frequency and Q
+    // — NOT on the gain the detector is computing — so for a band whose knobs are
+    // still it never needs recomputing at all, however hard the detector is working.
+    bool haveAnalysisDesign = false;
+    FilterType lastAnalysisType {};
+    float lastAnalysisFreq = 0.0f;
+    float lastAnalysisQ = 0.0f;
+    double lastAnalysisSampleRate = 0.0;
+
     float rmsStateSquared = 0.0f;
     float smoothedGainDeltaDb = 0.0f;
     std::atomic<float> currentGainDeltaDb { 0.0f };
