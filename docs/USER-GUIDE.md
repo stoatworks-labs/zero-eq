@@ -26,8 +26,10 @@ The catch is permanent: there's **no linear-phase mode**, and there never will b
 
 ## Installing
 
-Build it yourself, or grab a release build. On macOS the VST3 goes to
-`~/Library/Audio/Plug-Ins/VST3/Zero EQ.vst3`; the AU alongside it. Rescan plugins in your DAW.
+Build it yourself, or grab a release build. On macOS a build of your own copies the VST3 to
+`~/Library/Audio/Plug-Ins/VST3/Zero EQ.vst3`, with the AU alongside it. The release `.pkg`
+installs them for every user instead, to `/Library/Audio/Plug-Ins/VST3` and
+`/Library/Audio/Plug-Ins/Components`. Rescan plugins in your DAW.
 
 ---
 
