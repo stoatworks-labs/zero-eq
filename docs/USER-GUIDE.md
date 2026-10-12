@@ -6,6 +6,8 @@ at all, so you can track and monitor through it.
 > **Before live use:** the DSP has been verified analytically and against real audio, passes
 > `pluginval` and Apple's `auval`, and has been hosted in REAPER. It has **not** been used on
 > real hardware in a live signal chain. Check it over before you put it on a show.
+>
+> This codebase was created with AI assistance, directed and reviewed by a human author.
 
 ---
 
