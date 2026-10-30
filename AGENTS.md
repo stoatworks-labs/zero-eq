@@ -105,7 +105,7 @@ side effect on the user's system.
 
 macOS universal builds: `CMAKE_OSX_ARCHITECTURES` must be set **before** `project()`, or you
 silently ship arm64-only. Verify the artefact with `lipo`/`file`, never the build log. CI
-cross-compiles macOS x86_64 on `macos-14` — `macos-13` Intel runners are retired.
+cross-compiles macOS x86_64 on `macos-15` — `macos-13` Intel runners are retired.
 
 ### How to verify DSP changes — read this carefully
 

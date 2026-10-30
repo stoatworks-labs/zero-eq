@@ -10,7 +10,7 @@ Zero-latency EQ + dynamic-EQ (+ sidechain) + band-isolated harmonic generation +
 ## Notes
 - JUCE plugin — DSP is real-time/allocation-sensitive; keep the audio thread lock-free and allocation-free.
 - "Zero-latency" is a product guarantee: don't introduce lookahead/latency without surfacing it.
-- Public repo. Ships user-facing AI disclaimer. Multi-platform release CI; cross-compile macOS x86_64 on macos-14 (never macos-13). "Commit" = commit **and** push.
+- Public repo. Ships user-facing AI disclaimer. Multi-platform release CI; cross-compile macOS x86_64 on macos-15 (never macos-13). "Commit" = commit **and** push.
 
 ## Verifying DSP changes
 Build a throwaway console harness that pushes real audio through the actual shipped

@@ -28,7 +28,7 @@ it: you get an arm64-only binary, and the build log reports success.
 lipo -archs "build/.../Zero EQ.vst3/Contents/MacOS/Zero EQ"
 ```
 
-CI cross-compiles macOS x86_64 on **`macos-14`**. Never `macos-13` — those Intel runners are
+CI cross-compiles macOS x86_64 on **`macos-15`**. Never `macos-13` — those Intel runners are
 retired and the job just fails.
 
 ---
