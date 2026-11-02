@@ -106,8 +106,8 @@ if (( use_vm )) && command -v prlctl >/dev/null 2>&1 \
       cp -R "$src"/* "$wstage/"
       cp README.md LICENSE "$wstage/"
       rl_zip  "windows-${label}" "$wstage"
-      # A plugin installer has no shortcut to make; --plain keeps it to files.
-      rl_nsis "windows-${label}" "$wstage" --plain
+      # --vst3 puts the VST3 in Common Files\VST3, where every host scans.
+      rl_nsis "windows-${label}" "$wstage" --vst3
       rm -rf "$wstage" "$src"
     else
       rl_skip "Windows ${label} (no artefacts produced)"

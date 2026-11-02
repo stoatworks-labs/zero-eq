@@ -29,7 +29,11 @@ The catch is permanent: there's **no linear-phase mode**, and there never will b
 Build it yourself, or grab a release build. On macOS a build of your own copies the VST3 to
 `~/Library/Audio/Plug-Ins/VST3/Zero EQ.vst3`, with the AU alongside it. The release `.pkg`
 installs them for every user instead, to `/Library/Audio/Plug-Ins/VST3` and
-`/Library/Audio/Plug-Ins/Components`. Rescan plugins in your DAW.
+`/Library/Audio/Plug-Ins/Components`. On Windows the installer puts the VST3 in
+`C:\Program Files\Common Files\VST3\`, which every VST3 host scans, and the standalone in
+`C:\Program Files\Zero EQ\`. The v0.8.2 installer and older put the VST3 in
+`C:\Program Files\Zero EQ\VST3\` instead, where no host looks: move it across by hand, or run a
+newer installer, which clears that copy away. Rescan plugins in your DAW.
 
 ---
 
