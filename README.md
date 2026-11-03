@@ -13,6 +13,8 @@
 Zero EQ is a parametric EQ and compressor plugin (VST3/AU, built with JUCE) that adds no
 latency at all, so you can track and monitor through it.
 
+The [project page](https://stoatworks-labs.com/software/zero-eq/) has the downloads, the [user guide](https://stoatworks-labs.com/software/zero-eq/guide/) and the video.
+
 **Video:** [What it does, in 45 seconds](https://www.youtube.com/watch?v=lhbbMLN6E6g)
 
 **Try it in the browser:** [zero-eq-sim.allan-sargeant.workers.dev](https://zero-eq-sim.allan-sargeant.workers.dev).
